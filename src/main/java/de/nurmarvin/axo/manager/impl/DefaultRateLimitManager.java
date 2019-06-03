@@ -5,6 +5,7 @@ import de.nurmarvin.axo.manager.RateLimitManager;
 import de.nurmarvin.axo.utils.SimpleRateLimiter;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class DefaultRateLimitManager implements RateLimitManager {
@@ -16,11 +17,17 @@ public class DefaultRateLimitManager implements RateLimitManager {
 
     @Override
     public SimpleRateLimiter getRateLimiterForGuild(String guildId) {
+        return this.getOrCreateRateLimiterForGuild(guildId, 1, 1, null);
+    }
+
+    @Override
+    public SimpleRateLimiter getOrCreateRateLimiterForGuild(String guildId, int maxPermits,
+                                                            int refreshTime, CompletableFuture<Void> clearCallback) {
         if(this.rateLimiters.containsKey(guildId)) return rateLimiters.get(guildId);
 
-        this.rateLimiters.put(guildId, SimpleRateLimiter.create(5, 20, TimeUnit.SECONDS));
+        this.rateLimiters.put(guildId, SimpleRateLimiter.create(maxPermits, refreshTime, TimeUnit.SECONDS, clearCallback));
 
-        return this.getRateLimiterForGuild(guildId);
+        return this.getOrCreateRateLimiterForGuild(guildId, maxPermits, refreshTime, clearCallback);
     }
 
     @Override

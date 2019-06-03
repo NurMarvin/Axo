@@ -1,14 +1,12 @@
 package de.nurmarvin.axo.manager;
 
-import de.nurmarvin.axo.utils.SimpleRateLimiter;
+import com.mewna.catnip.entity.guild.Member;
 
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.List;
 
-public interface RateLimitManager {
-    SimpleRateLimiter getRateLimiterForGuild(String guildId);
+public interface JoinManager {
+    List<Member> getJoinsForGuild(String guildId);
 
-    SimpleRateLimiter getOrCreateRateLimiterForGuild(String guildId, int maxPermits, int refreshTime, CompletableFuture<Void> clearCallback);
-
-    Map<String, SimpleRateLimiter> rateLimiters();
+    void addJoin(String guildId, Member member);
+    void clearJoinsForGuild(String guildId);
 }

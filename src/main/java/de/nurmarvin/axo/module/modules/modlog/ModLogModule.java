@@ -2,7 +2,6 @@ package de.nurmarvin.axo.module.modules.modlog;
 
 import com.google.common.collect.Maps;
 import com.mewna.catnip.entity.builder.EmbedBuilder;
-import com.mewna.catnip.entity.channel.Channel;
 import com.mewna.catnip.entity.channel.GuildChannel;
 import com.mewna.catnip.entity.channel.TextChannel;
 import com.mewna.catnip.entity.guild.Member;
@@ -12,6 +11,7 @@ import de.nurmarvin.axo.utils.Embeds;
 
 import java.util.Map;
 import java.util.Objects;
+
 
 public class ModLogModule implements Module {
 
@@ -85,11 +85,31 @@ public class ModLogModule implements Module {
 
                 if(parentId != null) {
                     embedBuilder = embedBuilder
-                            .field("Parent ID", parentId, false)
-                            .field("Parent", parent, true);
+                            .field("Parent", String.format("%s (%s)", parent, parentId), false);
                 }
 
                 textChannel.sendMessage(embedBuilder.build());
+            }
+        });
+    }
+
+    public void handleRaid(Member member, int joins, int refreshTime) {
+        if(channels == null) return;
+
+        channels.forEach((channelId, modLogChannel) -> {
+            TextChannel textChannel = member.guild().textChannel(channelId);
+
+            if (textChannel == null || !logs(modLogChannel, ModLogActions.RAID_DETECTED)) return;
+
+            String message = String.format("%s joins in under %s seconds reached!", joins, refreshTime);
+
+            if(modLogChannel.useEmbeds()) {
+                EmbedBuilder embedBuilder = Embeds.normalEmbed(member.guild())
+                                                  .title("Raid detected")
+                                                  .description(message);
+                textChannel.sendMessage(embedBuilder.build());
+            } else {
+                textChannel.sendMessage("**Raid Detected**\n\n" + message);
             }
         });
     }

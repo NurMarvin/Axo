@@ -142,19 +142,25 @@ public class ServerInfoCommand extends AbstractCommand {
         GuildSettings.Modules modules = commandContext.guildSettings().modules();
 
         String antiRaid = (modules.antiRaid() != null ? emojis.activatedEmote() :
-                          emojis.deactivatedEmote()) + modules.antiRaid().name();
+                           emojis.deactivatedEmote()) + modules.antiRaid().name();
+
+        String modLog = (modules.modLog() != null ? emojis.activatedEmote() :
+                         emojis.deactivatedEmote()) + modules.modLog().name();
 
         String utility = (modules.utility() != null ? emojis.activatedEmote() :
-                           emojis.deactivatedEmote()) + modules.utility().name();
+                          emojis.deactivatedEmote()) + modules.utility().name();
 
         String moduleList = String.format("%s\n" +
-                                           "%s\n",
-                                           antiRaid,
-                                           utility);
+                                          "%s\n" +
+                                          "%s\n",
+                                          antiRaid,
+                                          modLog,
+                                          utility);
 
         if(commandContext.useEmbeds()) {
             EmbedBuilder embedBuilder = Embeds
                     .normalEmbed(commandContext)
+                    .thumbnail(commandContext.guild().iconUrl())
                     .title(String.format("Server Information for %s",
                                          guildName))
                     .field("General Information", generalInformation, false)

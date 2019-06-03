@@ -9,15 +9,19 @@ import de.nurmarvin.axo.command.CommandContext;
 import de.nurmarvin.axo.command.CommandLevel;
 import de.nurmarvin.axo.manager.CommandManager;
 import de.nurmarvin.axo.manager.GuildSettingsManager;
+import de.nurmarvin.axo.manager.JoinManager;
 import de.nurmarvin.axo.manager.RateLimitManager;
 import de.nurmarvin.axo.manager.impl.DefaultCommandManager;
+import de.nurmarvin.axo.manager.impl.DefaultJoinManager;
 import de.nurmarvin.axo.manager.impl.DefaultRateLimitManager;
 import de.nurmarvin.axo.manager.impl.FileSystemGuildSettingsManager;
 import de.nurmarvin.axo.module.modules.moderation.commands.CleanCommand;
+import de.nurmarvin.axo.module.modules.utility.commands.AxolotlCommand;
 import de.nurmarvin.axo.module.modules.utility.commands.InfoCommand;
 import de.nurmarvin.axo.module.modules.utility.commands.ServerInfoCommand;
 import de.nurmarvin.axo.settings.GuildSettings;
 import de.nurmarvin.axo.settings.Settings;
+import io.github.classgraph.utils.Join;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +38,7 @@ public final class AxoDiscordBot {
     private Settings settings;
     private Catnip catnip;
 
+    private JoinManager joinManager;
     private CommandManager commandManager;
     private GuildSettingsManager guildSettingsManager;
     private RateLimitManager rateLimitManager;
@@ -54,6 +59,7 @@ public final class AxoDiscordBot {
             System.exit(0);
         }
 
+        this.joinManager = new DefaultJoinManager();
         this.guildSettingsManager = new FileSystemGuildSettingsManager();
         this.rateLimitManager = new DefaultRateLimitManager();
         this.commandManager = new DefaultCommandManager();
@@ -67,6 +73,7 @@ public final class AxoDiscordBot {
 
         this.commandManager.registerCommand(new ServerInfoCommand());
         this.commandManager.registerCommand(new InfoCommand());
+        this.commandManager.registerCommand(new AxolotlCommand());
 
         this.commandManager.registerCommand(new CleanCommand());
 
@@ -75,25 +82,20 @@ public final class AxoDiscordBot {
             catnip.on(DiscordEvent.MESSAGE_CREATE, message -> {
                 if(message.author().bot()) return;
 
-                GuildSettings guildSettings = this.guildSettingsManager.getGuildSetting(message.guildId());
-
-                if(guildSettings != null) {
-                    if(guildSettings.modules().antiRaid() != null) {
-                        if(!guildSettings.modules().antiRaid().handleMessage(message)) return;
-                    }
-                }
-
                 commandManager.handle(message);
             });
             catnip.on(DiscordEvent.GUILD_MEMBER_ADD, member -> {
                 GuildSettings guildSettings = this.guildSettingsManager.getGuildSetting(member.guildId());
 
                 if(guildSettings != null) {
-                    if(guildSettings.modules().utility() != null) {
-                        guildSettings.modules().utility().handleGuildJoin(member);
-                    }
                     if(guildSettings.modules().modLog() != null) {
                         guildSettings.modules().modLog().handleGuildJoin(member);
+                    }
+                    if(guildSettings.modules().antiRaid() != null) {
+                        if(guildSettings.modules().antiRaid().handleGuildJoin(member)) return;
+                    }
+                    if(guildSettings.modules().utility() != null) {
+                        guildSettings.modules().utility().handleGuildJoin(member);
                     }
                 }
             });
@@ -140,6 +142,10 @@ public final class AxoDiscordBot {
 
     public Catnip catnip() {
         return catnip;
+    }
+
+    public JoinManager joinManager() {
+        return joinManager;
     }
 
     public GuildSettingsManager guildSettingsManager() {

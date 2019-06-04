@@ -92,13 +92,6 @@ public final class AxoDiscordBot {
             }
         });
 
-        this.commandManager.registerCommand(new AbstractCommand("exception", CommandLevel.ADMIN) {
-            @Override
-            public void execute(CommandContext commandContext) {
-                commandContext.guild().member(-1).user();
-            }
-        });
-
         if(this.settings.apiKeys().containsKey("pastebin")) {
             this.pastebinFactory = new PastebinFactory();
             this.pastebin = pastebinFactory.createPastebin(this.settings.apiKeys().get("pastebin"));

@@ -1,5 +1,6 @@
 package de.nurmarvin.axo.command;
 
+import com.mewna.catnip.Catnip;
 import com.mewna.catnip.entity.Snowflake;
 import com.mewna.catnip.entity.channel.MessageChannel;
 import com.mewna.catnip.entity.guild.Guild;
@@ -10,6 +11,7 @@ import com.mewna.catnip.entity.user.User;
 import de.nurmarvin.axo.AxoDiscordBot;
 import de.nurmarvin.axo.settings.GuildSettings;
 import de.nurmarvin.axo.settings.Settings;
+import de.nurmarvin.axo.utils.AxolotlAPI;
 import gg.amy.catnip.utilities.FinderUtil;
 
 import javax.annotation.CheckReturnValue;
@@ -33,6 +35,11 @@ public final class CommandContext {
         this.aliasUsed = aliasUsed;
         this.args = args;
         this.concatArgs = concatArgs;
+    }
+
+    @Nonnull
+    public Catnip catnip() {
+        return AxoDiscordBot.instance().catnip();
     }
 
     @Nonnull
@@ -84,6 +91,11 @@ public final class CommandContext {
         return args;
     }
 
+    @Nonnull
+    public int argLength() {
+        return args.length;
+    }
+
     @CheckReturnValue
     public CommandArg arg(int arg) throws CommandException {
         if(arg > args.length) throw new CommandException("Not enough arguments");
@@ -123,7 +135,7 @@ public final class CommandContext {
 
         //TODO: Implement overrides
 
-        return requiredLevel == 0 || highestLevel.get() > requiredLevel;
+        return requiredLevel == 0 || highestLevel.get() >= requiredLevel;
     }
 
     @Nonnull
@@ -148,7 +160,9 @@ public final class CommandContext {
         private String value;
 
         public CommandArg(String value, Guild guild) {
-            this.value = value.replace("`", "\\u0060");
+            this.value = value.replace("`", "")
+                              .replace("@everyone", "\\@everyone")
+                              .replace("@here", "\\@here");
             this.guild = guild;
         }
 

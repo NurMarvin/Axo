@@ -1,11 +1,14 @@
 package de.nurmarvin.axo.utils;
 
+
+import com.besaba.revonline.pastebinapi.paste.PasteBuilder;
+import com.besaba.revonline.pastebinapi.paste.PasteExpire;
+import com.besaba.revonline.pastebinapi.paste.PasteVisiblity;
+import com.besaba.revonline.pastebinapi.response.Response;
 import com.mewna.catnip.entity.builder.EmbedBuilder;
 import com.mewna.catnip.entity.guild.Guild;
 import com.mewna.catnip.entity.guild.Member;
-import com.mewna.catnip.entity.message.Embed;
-import com.mewna.catnip.entity.user.User;
-import com.mewna.catnip.util.CatnipMeta;
+import com.mewna.catnip.entity.message.MessageOptions;
 import de.nurmarvin.axo.AxoDiscordBot;
 import de.nurmarvin.axo.command.CommandContext;
 import de.nurmarvin.axo.settings.GuildSettings;
@@ -37,9 +40,47 @@ public final class Embeds {
 
     public static void exception(CommandContext context, Exception e) {
         String stackTrace = ExceptionUtils.getStackTrace(e);
-        EmbedBuilder usage = errorEmbed(context)
-                .description(stackTrace.substring(0, Math.min(2048, stackTrace.length())));
-        context.send(usage.build());
+        String cutDownStackTrace = stackTrace.substring(0, Math.min(512, stackTrace.length()));
+        String description = "Looks like Axo did an oopsie.\n" +
+                             "This has been automatically reported to us but feel free to join our" +
+                             " [support server](https://discord.gg/j2b6CTZ) if you want to.";
+
+        String webHookId = AxoDiscordBot.instance().settings().exceptionWebHookId();
+        String webHookToken = AxoDiscordBot.instance().settings().exceptionWebHookToken();
+
+        if(!(webHookId.isEmpty() && webHookToken.isEmpty())) {
+            EmbedBuilder embedBuilder = errorEmbed(context)
+                    .title(e.getClass().getSimpleName())
+                    .description("```" + cutDownStackTrace + "```")
+                    .field("User ID", context.user().id(), true)
+                    .field("Guild ID", context.guild().id(), true)
+                    .field("Channel ID", context.messageChannel().id(), true)
+                    .field("Message", context.message().content(), false);
+
+            PasteBuilder pasteBuilder = AxoDiscordBot.instance().pastebinFactory().createPaste();
+
+            pasteBuilder.setTitle(e.getClass().getSimpleName() + " - Axo Bot")
+                        .setMachineFriendlyLanguage("text")
+                        .setRaw(stackTrace)
+                        .setVisiblity(PasteVisiblity.Unlisted)
+                        .setExpire(PasteExpire.OneWeek);
+
+            final Response<String> response = AxoDiscordBot.instance().pastebin()
+                                                           .post(pasteBuilder.build());
+
+            if(response.getError() == null) {
+                embedBuilder = embedBuilder.field("Stacktrace", response.get(), false);
+            }
+
+            AxoDiscordBot.instance().catnip().rest().webhook()
+                         .executeWebhook(webHookId, webHookToken, new MessageOptions().embed(embedBuilder.build()))
+                         .thenAccept(ignored -> {});
+        }
+
+        EmbedBuilder embed = errorEmbed(context)
+                .description(description);
+
+        context.send(embed.build());
     }
 
     public static EmbedBuilder errorEmbed(CommandContext commandContext) {

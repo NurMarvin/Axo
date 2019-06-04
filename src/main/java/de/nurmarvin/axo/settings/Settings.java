@@ -1,8 +1,16 @@
 package de.nurmarvin.axo.settings;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Settings {
     private ConnectionSettings connectionSettings = new ConnectionSettings();
     private MySQLSettings mySQLSettings = new MySQLSettings();
+
+    private String exceptionWebHookId = "";
+    private String exceptionWebHookToken = "";
+
+    private Map<String, String> apiKeys = new HashMap<>();
 
     public ConnectionSettings connectionSettings() {
         return connectionSettings;
@@ -10,6 +18,18 @@ public class Settings {
 
     public MySQLSettings mySQLSettings() {
         return mySQLSettings;
+    }
+
+    public String exceptionWebHookId() {
+        return exceptionWebHookId;
+    }
+
+    public String exceptionWebHookToken() {
+        return exceptionWebHookToken;
+    }
+
+    public Map<String, String> apiKeys() {
+        return apiKeys;
     }
 
     public class ConnectionSettings {
